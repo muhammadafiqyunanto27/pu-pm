@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+---
+
+<Layout title="Halaman tidak ditemukan — Pasar Uang & Modal" description="Halaman yang dicari tidak ada. Kembali ke modul pasar uang dan pasar modal.">
+	<div class="wrap notfound">
+		<p class="code">404 · LEMBAR TIDAK DITEMUKAN</p>
+		<h1>Halaman ini tidak ada di peta.</h1>
+		<p>Mungkin tautannya berubah, atau topik yang dicari belum ditulis. Kembali ke daftar materi untuk menemukan jalur yang benar.</p>
+		<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+			<a class="btn btn-solid" href={`${base}/rangkuman`}>Buka rangkuman</a>
+			<a class="btn btn-ghost" href={base || '/'}>Beranda</a>
+		</div>
+	</div>
+</Layout>

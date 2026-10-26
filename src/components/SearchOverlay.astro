@@ -1,0 +1,260 @@
+---
+interface Props {
+	base: string;
+}
+const { base } = Astro.props;
+---
+
+<div class="search" data-base={base}>
+	<button
+		type="button"
+		class="search-open"
+		id="searchOpen"
+		aria-label="Cari materi (Ctrl+K)"
+		aria-haspopup="dialog"
+	>
+		<svg viewBox="0 0 24 24" aria-hidden="true">
+			<circle cx="11" cy="11" r="7"></circle>
+			<path d="m20 20-3.5-3.5"></path>
+		</svg>
+		<span class="search-open-label">Cari</span>
+		<kbd class="search-kbd">Ctrl K</kbd>
+	</button>
+
+	<div class="search-overlay" id="searchOverlay" hidden>
+		<div class="search-panel" role="dialog" aria-modal="true" aria-label="Cari materi">
+			<div class="search-field">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<circle cx="11" cy="11" r="7"></circle>
+					<path d="m20 20-3.5-3.5"></path>
+				</svg>
+				<input
+					type="search"
+					id="searchInput"
+					placeholder="Cari topik, istilah, instrumen…"
+					autocomplete="off"
+					spellcheck="false"
+					aria-label="Kata kunci pencarian"
+					aria-controls="searchResults"
+				/>
+				<button type="button" class="search-esc" id="searchEsc" aria-label="Tutup pencarian">ESC</button>
+			</div>
+			<p class="search-hint" id="searchHint">
+				Ketik minimal 2 karakter untuk mencari dari 27 topik, 17 instrumen, 70 istilah, dan latihan soal.
+			</p>
+			<ul class="search-results" id="searchResults" hidden aria-label="Hasil pencarian"></ul>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+	(() => {
+		const openBtn = document.getElementById('searchOpen');
+		const overlay = document.getElementById('searchOverlay');
+		const input = document.getElementById('searchInput');
+		const hint = document.getElementById('searchHint');
+		const list = document.getElementById('searchResults');
+		const escBtn = document.getElementById('searchEsc');
+		if (!openBtn || !overlay || !input || !hint || !list) return;
+
+		const base = (document.querySelector('.search')?.dataset.base || '').replace(/\/$/, '');
+		let records = null;
+		let loading = false;
+		let activeIdx = -1;
+		let debounce = null;
+		let lastFocus = null;
+
+		const loadIndex = async () => {
+			if (records || loading) return;
+			loading = true;
+			try {
+				const res = await fetch(base + '/search-index.json');
+				if (!res.ok) throw new Error('index unavailable');
+				records = await res.json();
+			} catch {
+				records = [];
+				hint.textContent = 'Indeks pencarian gagal dimuat. Coba muat ulang halaman.';
+				hint.hidden = false;
+			}
+			loading = false;
+		};
+
+		const escHtml = (s) =>
+			String(s).replace(/[&<>"']/g, (c) =>
+				c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;'
+			);
+
+		const mark = (text, tokens) => {
+			let out = escHtml(text);
+			for (const token of tokens) {
+				if (!token) continue;
+				const re = new RegExp('(' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+				out = out.replace(re, '<mark>$1</mark>');
+			}
+			return out;
+		};
+
+		const rawSnippet = (text, tokens) => {
+			const lower = text.toLowerCase();
+			let pos = -1;
+			for (const token of tokens) {
+				const p = lower.indexOf(token);
+				if (p >= 0 && (pos < 0 || p < pos)) pos = p;
+			}
+			if (pos < 0) pos = 0;
+			const start = Math.max(0, pos - 42);
+			const slice = text.slice(start, start + 155);
+			return (start > 0 ? '…' : '') + slice + (start + 155 < text.length ? '…' : '');
+		};
+
+		const items = () => [...list.querySelectorAll('.search-item a')];
+
+		const run = (q) => {
+			list.innerHTML = '';
+			activeIdx = -1;
+			const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+			if (!tokens.length || !records) {
+				hint.hidden = false;
+				list.hidden = true;
+				return;
+			}
+
+			const scored = [];
+			for (const record of records) {
+				const title = record.title.toLowerCase();
+				const text = record.text.toLowerCase();
+				const meta = (record.meta || '').toLowerCase();
+				let score = 0;
+				let ok = true;
+				for (const token of tokens) {
+					let s = 0;
+					if (title.includes(token)) s += 14;
+					if (meta.includes(token)) s += 5;
+					const count = text.split(token).length - 1;
+					if (count > 0) s += Math.min(count, 6) * 2;
+					if (!s) {
+						ok = false;
+						break;
+					}
+					score += s;
+				}
+				if (ok) scored.push({ record, score });
+			}
+			scored.sort((a, b) => b.score - a.score);
+
+			hint.hidden = true;
+			list.hidden = false;
+			if (!scored.length) {
+				const li = document.createElement('li');
+				li.className = 'search-empty';
+				li.textContent = 'Tidak ada hasil untuk “' + q + '”. Coba kata kunci yang lebih umum.';
+				list.appendChild(li);
+				return;
+			}
+
+			for (const { record } of scored.slice(0, 24)) {
+				const li = document.createElement('li');
+				li.className = 'search-item';
+				const a = document.createElement('a');
+				a.href = base + '/' + record.url;
+				a.innerHTML =
+					'<span class="search-kind">' +
+					escHtml(record.kind) +
+					'</span><span class="search-body"><b>' +
+					mark(record.title, tokens) +
+					'</b><small>' +
+					mark(rawSnippet(record.text, tokens), tokens) +
+					'</small></span>';
+				li.appendChild(a);
+				list.appendChild(li);
+			}
+		};
+
+		const moveActive = (dir) => {
+			const its = items();
+			if (!its.length) return;
+			if (activeIdx >= 0 && its[activeIdx]) its[activeIdx].classList.remove('active');
+			let next = activeIdx + dir;
+			if (next < 0) next = its.length - 1;
+			if (next >= its.length) next = 0;
+			activeIdx = next;
+			const el = its[activeIdx];
+			el.classList.add('active');
+			el.scrollIntoView({ block: 'nearest' });
+		};
+
+		const openSearch = async () => {
+			lastFocus = document.activeElement;
+			overlay.hidden = false;
+			document.body.classList.add('nav-open');
+			input.focus();
+			await loadIndex();
+			if (input.value.trim().length >= 2) run(input.value.trim());
+		};
+
+		const closeSearch = () => {
+			overlay.hidden = true;
+			document.body.classList.remove('nav-open');
+			(lastFocus && lastFocus.focus ? lastFocus : openBtn).focus();
+		};
+
+		openBtn.addEventListener('click', openSearch);
+		escBtn?.addEventListener('click', closeSearch);
+		overlay.addEventListener('click', (e) => {
+			if (e.target === overlay) closeSearch();
+		});
+
+		input.addEventListener('input', () => {
+			clearTimeout(debounce);
+			debounce = setTimeout(() => {
+				const q = input.value.trim();
+				if (q.length < 2) {
+					list.innerHTML = '';
+					list.hidden = true;
+					hint.hidden = false;
+					return;
+				}
+				run(q);
+			}, 130);
+		});
+
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				moveActive(1);
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				moveActive(-1);
+			} else if (e.key === 'Enter') {
+				const its = items();
+				const target = activeIdx >= 0 ? its[activeIdx] : its[0];
+				if (target) {
+					e.preventDefault();
+					location.href = target.href;
+				}
+			}
+		});
+
+		document.addEventListener('keydown', (e) => {
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+				e.preventDefault();
+				overlay.hidden ? openSearch() : closeSearch();
+			} else if (e.key === 'Escape' && !overlay.hidden) {
+				e.preventDefault();
+				closeSearch();
+			} else if (e.key === 'Tab' && !overlay.hidden) {
+				const focusables = overlay.querySelectorAll('input, button, a[href]');
+				if (!focusables.length) return;
+				const first = focusables[0];
+				const last = focusables[focusables.length - 1];
+				if (e.shiftKey && document.activeElement === first) {
+					e.preventDefault();
+					last.focus();
+				} else if (!e.shiftKey && document.activeElement === last) {
+					e.preventDefault();
+					first.focus();
+				}
+			}
+		});
+	})();
+</script>

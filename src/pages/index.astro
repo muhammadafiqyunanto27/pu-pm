@@ -1,0 +1,205 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Syllabus from '../components/Syllabus.astro';
+import { chapters, topics, totalMinutes } from '../data/materi';
+import { instrumen } from '../data/instrumen';
+import { glosarium } from '../data/glosarium';
+import { soal } from '../data/quiz';
+import { perbandingan } from '../data/perbandingan';
+import { riskLevel } from '../lib/format';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
+const boardNames = ['Sertifikat Bank Indonesia', 'Surat Perbendaharaan Negara', 'Commercial Paper', 'Repurchase Agreement', 'Saham'];
+const boardItems = boardNames
+	.map((name) => instrumen.find((item) => item.name === name))
+	.filter((item): item is (typeof instrumen)[number] => Boolean(item));
+
+const totalRows = perbandingan.reduce((total, group) => total + group.rows.length, 0);
+const totalIstilah = glosarium.length;
+const totalSoal = soal.length;
+---
+
+<Layout
+	title="Pasar Uang & Pasar Modal — Modul Belajar"
+	description="Modul belajar pasar uang dan pasar modal: 27 topik dari enam deck materi, katalog 17 instrumen, tabel perbandingan, 70 istilah, dan 35 soal latihan."
+	active="home"
+>
+	<header class="hero">
+		<div class="wrap">
+			<div class="hero-grid">
+				<div>
+					<span class="hero-kicker">Enam deck · {topics.length} topik · {totalMinutes} menit baca</span>
+					<h1>Pasar uang &amp; pasar modal, <em>dibaca sebagai satu peta.</em></h1>
+					<p class="lead">
+						Bukan kumpulan slide yang berdiri sendiri. Dari surplus unit sampai valuta asing,
+						semua disusun berurutan — dengan tabel pembeda, katalog instrumen, dan latihan
+						yang bisa langsung dipakai.
+					</p>
+					<div class="hero-cta">
+						<a class="btn btn-solid" href={`${base}/rangkuman`}>Mulai dari Bab I <span aria-hidden="true">→</span></a>
+						<a class="btn btn-ghost" href={`${base}/latihan`}>Latihan 35 soal</a>
+					</div>
+					<p class="hero-note">Ctrl + K untuk mencari · mode gelap tersedia</p>
+				</div>
+
+				<aside class="board" aria-label="Ringkasan instrumen">
+					<div class="board-head">
+						<span>Papan pasar · ringkas</span>
+						<span class="board-live">5 dari 17</span>
+					</div>
+					{boardItems.map((item) => (
+						<a class="board-row" href={`${base}/instrumen#${item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}>
+							<span class="board-name">
+								{item.alias ?? item.name}
+								<small>{item.market === 'uang' ? 'Pasar uang' : 'Pasar modal'} · {item.category}</small>
+							</span>
+							<span class="board-tenor">{item.tenor}</span>
+							<span class="board-risk" data-level={riskLevel(item.risk)} aria-label={`Risiko ${item.risk}`}>
+								<i></i><i></i><i></i>
+							</span>
+						</a>
+					))}
+					<div class="board-foot">
+						Tenor pendek di kiri, risiko di kanan. Buka katalog untuk 17 instrumen lengkap.
+					</div>
+				</aside>
+			</div>
+		</div>
+		<div class="wrap">
+			<div class="stat-strip">
+				<div class="stat"><b>06</b><span>Deck sumber</span></div>
+				<div class="stat"><b>27</b><span>Topik rangkuman</span></div>
+				<div class="stat"><b>17</b><span>Instrumen</span></div>
+				<div class="stat"><b>{totalIstilah}</b><span>Istilah</span></div>
+				<div class="stat"><b>{totalSoal}</b><span>Soal latihan</span></div>
+			</div>
+		</div>
+	</header>
+
+	<div class="wrap page-body">
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Rute singkat</span>
+				<h2>Tiga cara masuk</h2>
+			</div>
+			<p class="sec-hint">Bisa berurutan, bisa juga lompat ke alat yang paling dibutuhkan sekarang.</p>
+		</div>
+
+		<div class="path-grid">
+			<a class="path-card" href={`${base}/rangkuman`}>
+				<span class="path-step"><span>01 · Baca</span><span class="mono">5 bab</span></span>
+				<h3>Peta dari nol</h3>
+				<p>Mulai dari pasar keuangan, turun ke pasar uang, lalu membandingkannya dengan pasar modal sebelum masuk instrumen dan valas.</p>
+				<span class="path-link">Buka rangkuman →</span>
+			</a>
+			<a class="path-card" href={`${base}/bandingkan`}>
+				<span class="path-step"><span>02 · Banding</span><span class="mono">{totalRows} baris</span></span>
+				<h3>Bedakan tanpa bingung</h3>
+				<p>Enam kelompok perbandingan: tenor, mekanisme, risiko, likuiditas, otoritas, dan fungsi. Satu tabel untuk semua sumbu.</p>
+				<span class="path-link">Lihat perbandingan →</span>
+			</a>
+			<a class="path-card" href={`${base}/latihan`}>
+				<span class="path-step"><span>03 · Uji</span><span class="mono">{totalSoal} soal</span></span>
+				<h3>Latihan yang menjelaskan</h3>
+				<p>Pilihan ganda dengan pembahasan langsung dan tautan balik ke topik. Pilih semua soal, latihan cepat, atau satu bab.</p>
+				<span class="path-link">Mulai latihan →</span>
+			</a>
+		</div>
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Dua ruas, satu jalan</span>
+				<h2>Pasar uang vs pasar modal</h2>
+			</div>
+			<p class="sec-hint">Pembeda paling sering ditanya: jangka waktu, tujuan, dan siapa yang mengawasi.</p>
+		</div>
+
+		<div class="split-band">
+			<div class="split-side">
+				<p class="eyebrow"><span>Pasar Uang</span><span class="mono">≤ 1 tahun</span></p>
+				<h3>Menjaga likuiditas</h3>
+				<p>Tempat dana jangka pendek bertemu kebutuhan jangka pendek. Nilai cenderung stabil, risikonya rendah, dan transaksinya banyak terjadi di luar bursa.</p>
+				<ul class="split-list">
+					<li>Instrumen: SBI, SPN, promes, BA, CP, repo, deposito.</li>
+					<li>Peserta: bank, BI, pemerintah, korporasi, lembaga keuangan.</li>
+					<li>Otoritas utama: Bank Indonesia.</li>
+				</ul>
+			</div>
+			<div class="split-side">
+				<p class="eyebrow"><span>Pasar Modal</span><span class="mono">&gt; 1 tahun</span></p>
+				<h3>Menumbuhkan modal</h3>
+				<p>Tempat perusahaan mencari dana jangka panjang dan investor menempatkan dana untuk bertumbuh. Harga bergerak setiap hari bursa.</p>
+				<ul class="split-list">
+					<li>Instrumen: saham, obligasi, sukuk, reksa dana, derivatif.</li>
+					<li>Peserta: emiten, investor, perusahaan efek, lembaga penunjang.</li>
+					<li>Otoritas: OJK, dengan Kemenkeu pada penerbitan SBN.</li>
+				</ul>
+			</div>
+			<div class="split-foot">
+				<span>Bukan dua dunia terpisah — dana berpindah dan risiko merambat di antara keduanya.</span>
+				<a href={`${base}/bandingkan`}>Tujuh sumbu pembeda →</a>
+			</div>
+		</div>
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Silabus</span>
+				<h2>Daftar materi</h2>
+			</div>
+			<span class="sec-hint">{chapters.length} bab · {topics.length} topik — klik untuk mulai membaca</span>
+		</div>
+		<Syllabus base={base} />
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Alat belajar</span>
+				<h2>Kalau butuh cepat</h2>
+			</div>
+			<p class="sec-hint">Empat pintu masuk untuk mengulang, membandingkan, mencari istilah, atau menguji diri.</p>
+		</div>
+
+		<div class="quick-grid">
+			<a class="quick-card" href={`${base}/instrumen`}>
+				<span class="quick-num">{instrumen.length}</span>
+				<span class="quick-body">
+					<b>Katalog instrumen</b>
+					<small>Dari SBI sampai derivatif — penerbit, tenor, imbal hasil, risiko, dan likuiditas dalam satu kartu.</small>
+				</span>
+			</a>
+			<a class="quick-card" href={`${base}/bandingkan`}>
+				<span class="quick-num">{perbandingan.length}</span>
+				<span class="quick-body">
+					<b>Tabel perbandingan</b>
+					<small>{totalRows} baris pembeda pasar uang dan pasar modal, dikelompokkan supaya mudah dihafal.</small>
+				</span>
+			</a>
+			<a class="quick-card" href={`${base}/glosarium`}>
+				<span class="quick-num">{totalIstilah}</span>
+				<span class="quick-body">
+					<b>Glosarium</b>
+					<small>Istilah dari surplus unit sampai wadiah, dengan filter kategori dan pencarian langsung.</small>
+				</span>
+			</a>
+			<a class="quick-card dark" href={`${base}/latihan`}>
+				<span class="quick-num">{totalSoal}</span>
+				<span class="quick-body">
+					<b>Latihan soal</b>
+					<small>Pilihan ganda dengan pembahasan, skor, dan tautan balik ke topik yang perlu dibaca ulang.</small>
+				</span>
+			</a>
+		</div>
+
+		<div class="card" style="margin-top:36px">
+			<h3><span class="tag">Catatan</span> Tentang modul ini</h3>
+			<p>
+				Isi disusun dari enam deck presentasi kelas: pasar keuangan, pengertian pasar uang,
+				instrumen pasar uang, commercial paper sampai pasar uang syariah, perbandingan pasar
+				uang–modal, dan valuta asing. Beberapa kekeliruan teknis di slide asli — seperti
+				tertukarnya uraian likuiditas dan efisiensi, serta contoh laba valas yang tidak konsisten —
+				diperbaiki di sini agar tidak ikut dihafal.
+			</p>
+			<p class="note">Gunakan situs ini untuk memahami pola, bukan menggantikan buku teks atau penjelasan dosen.</p>
+		</div>
+	</div>
+</Layout>

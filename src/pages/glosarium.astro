@@ -1,0 +1,177 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { glosariumSorted, kategoriIstilah } from '../data/glosarium';
+import { topics } from '../data/materi';
+import { slugify } from '../lib/format';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const topicByNumber = new Map(topics.map((topic) => [topic.n, topic]));
+
+const letters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+const firstOfLetter = new Map<string, string>();
+for (const item of glosariumSorted) {
+	const letter = item.term.charAt(0).toUpperCase();
+	if (!firstOfLetter.has(letter)) firstOfLetter.set(letter, `g-${slugify(item.term)}`);
+}
+
+const categoryCounts = new Map<string, number>();
+for (const item of glosariumSorted) categoryCounts.set(item.category, (categoryCounts.get(item.category) ?? 0) + 1);
+---
+
+<Layout
+	title="Glosarium — Pasar Uang & Pasar Modal"
+	description="70 istilah pasar uang, pasar modal, risiko, syariah, dan valuta asing — dengan pencarian, filter kategori, dan tautan ke topik terkait."
+	active="glosarium"
+	crumb="Glosarium · 70 istilah · 7 kategori"
+	heading="Glosarium"
+	subheading="Istilah yang muncul di rangkuman, diurutkan A–Z. Cari definisi singkatnya, lalu lompat ke topik tempat istilah itu dipakai."
+	chips={[`${glosariumSorted.length} istilah`, `${kategoriIstilah.length} kategori`, 'A–Z', 'Tautan ke topik']}
+>
+	<div class="wrap page-body">
+		<div class="filter-bar" aria-label="Filter glosarium">
+			<div class="filter-chips" role="group" aria-label="Filter kategori">
+				<button type="button" class="chip" data-category-filter="all" aria-pressed="true">
+					Semua <span class="count">{glosariumSorted.length}</span>
+				</button>
+				{kategoriIstilah.map((category) => (
+					<button type="button" class="chip" data-category-filter={category} aria-pressed="false">
+						{category} <span class="count">{categoryCounts.get(category) ?? 0}</span>
+					</button>
+				))}
+			</div>
+			<label class="filter-search">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+				<span class="sr-only">Cari istilah</span>
+				<input type="search" id="glosSearch" placeholder="Cari istilah atau definisi…" autocomplete="off" />
+			</label>
+		</div>
+
+		<nav class="alpha-nav" aria-label="Lompat ke huruf">
+			{letters.map((letter) =>
+				firstOfLetter.has(letter) ? (
+					<a href={`#${firstOfLetter.get(letter)}`}>{letter}</a>
+				) : (
+					<span class="is-empty" aria-hidden="true">{letter}</span>
+				)
+			)}
+		</nav>
+
+		<div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px">
+			<span class="result-count" id="gloCount">Menampilkan {glosariumSorted.length} dari {glosariumSorted.length} istilah</span>
+			<span class="result-count">Klik huruf untuk melompat</span>
+		</div>
+
+		<dl class="glo-grid" id="gloGrid">
+			{glosariumSorted.map((item) => {
+				const related = item.related ? topicByNumber.get(item.related) : null;
+				return (
+					<div
+						class="glo-item"
+						id={`g-${slugify(item.term)}`}
+						data-glo-item
+						data-category={item.category}
+						data-search={`${item.term} ${item.def} ${item.category}`.toLowerCase()}
+					>
+						<dt>
+							{item.term}
+							<span class="glo-cat">{item.category}</span>
+						</dt>
+						<dd>
+							{item.def}
+							{related && (
+								<a href={`${base}/rangkuman/${related.slug}`}>Baca: topik {String(related.n).padStart(2, '0')} →</a>
+							)}
+						</dd>
+					</div>
+				);
+			})}
+		</dl>
+
+		<div class="filter-empty" id="gloEmpty" hidden>
+			Tidak ada istilah yang cocok. Coba kata lain atau ganti kategori.
+		</div>
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Catatan pemakaian</span>
+				<h2>Definisi ini untuk apa?</h2>
+			</div>
+			<p class="sec-hint">Bukan kamus lengkap. Hanya istilah yang muncul di modul dan sering dipakai saat ujian.</p>
+		</div>
+
+		<div class="block-cards">
+			<article class="block-card">
+				<p class="label">Kontekstual</p>
+				<h3>Definisi mengikuti slide</h3>
+				<p>Istilah seperti “efisiensi” dan “likuiditas” dibuat sesuai konteks pasar keuangan, bukan arti umum sehari-hari.</p>
+			</article>
+			<article class="block-card">
+				<p class="label">Berurutan</p>
+				<h3>A–Z, bukan urutan bab</h3>
+				<p>Gunakan navigasi huruf untuk mencari cepat; gunakan tautan “Baca topik” untuk kembali ke penjelasan lengkapnya.</p>
+			</article>
+			<article class="block-card">
+				<p class="label">Terhubung</p>
+				<h3>Setiap istilah punya jangkar</h3>
+				<p>Alamat halaman menyimpan ID istilah, jadi kamu bisa membagikan tautan langsung ke satu definisi.</p>
+			</article>
+		</div>
+
+		<div class="quick-grid" style="margin-top:24px">
+			<a class="quick-card" href={`${base}/rangkuman`}>
+				<span class="quick-num">27</span>
+				<span class="quick-body"><b>Baca rangkuman</b><small>Kembali ke alur topik dari Bab I sampai Bab V.</small></span>
+			</a>
+			<a class="quick-card" href={`${base}/instrumen`}>
+				<span class="quick-num">17</span>
+				<span class="quick-body"><b>Katalog instrumen</b><small>Nama produk dengan penerbit, tenor, dan risikonya.</small></span>
+			</a>
+			<a class="quick-card dark" href={`${base}/latihan`}>
+				<span class="quick-num">35</span>
+				<span class="quick-body"><b>Latihan soal</b><small>Uji apakah istilahnya benar-benar dipahami.</small></span>
+			</a>
+		</div>
+	</div>
+</Layout>
+
+<script is:inline>
+	(() => {
+		const grid = document.getElementById('gloGrid');
+		const search = document.getElementById('glosSearch');
+		const count = document.getElementById('gloCount');
+		const empty = document.getElementById('gloEmpty');
+		const chips = [...document.querySelectorAll('[data-category-filter]')];
+		if (!grid || !search || !count || !empty || !chips.length) return;
+
+		const items = [...grid.querySelectorAll('[data-glo-item]')];
+		let category = 'all';
+
+		const apply = () => {
+			const query = search.value.trim().toLowerCase();
+			let visible = 0;
+			for (const item of items) {
+				const matchCategory = category === 'all' || item.dataset.category === category;
+				const matchQuery = !query || item.dataset.search.includes(query);
+				const show = matchCategory && matchQuery;
+				item.hidden = !show;
+				if (show) visible += 1;
+			}
+			count.textContent = `Menampilkan ${visible} dari ${items.length} istilah`;
+			empty.hidden = visible !== 0;
+		};
+
+		chips.forEach((chip) => {
+			chip.addEventListener('click', () => {
+				category = chip.dataset.categoryFilter || 'all';
+				chips.forEach((item) => item.setAttribute('aria-pressed', String(item === chip)));
+				apply();
+			});
+		});
+
+		let timer = null;
+		search.addEventListener('input', () => {
+			clearTimeout(timer);
+			timer = setTimeout(apply, 100);
+		});
+	})();
+</script>

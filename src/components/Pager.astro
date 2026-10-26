@@ -1,0 +1,46 @@
+---
+interface Item {
+	n: number;
+	short: string;
+	label: string;
+	href: string;
+}
+
+interface Props {
+	items: Item[];
+	current: number;
+	unit?: string;
+}
+
+const { items, current, unit = 'topik' } = Astro.props;
+const idx = items.findIndex((item) => item.n === current);
+const prev = idx > 0 ? items[idx - 1] : null;
+const next = idx >= 0 && idx < items.length - 1 ? items[idx + 1] : null;
+---
+
+<nav class="pager" aria-label={`Navigasi antar ${unit}`}>
+	{prev ? (
+		<a class="pager-btn" href={prev.href} rel="prev" aria-label={`Sebelumnya: ${prev.label}`}>
+			<span aria-hidden="true">←</span> {prev.short}
+		</a>
+	) : (
+		<span class="pager-btn is-off" aria-disabled="true"><span aria-hidden="true">←</span></span>
+	)}
+	<div class="pager-nums">
+		{items.map((item) =>
+			item.n === current ? (
+				<span class="pager-num active" aria-current="page">{item.short}</span>
+			) : (
+				<a class="pager-num" href={item.href} aria-label={item.label}>{item.short}</a>
+			)
+		)}
+	</div>
+	<span class="pager-pos" aria-hidden="true">{idx + 1} / {items.length}</span>
+	{next ? (
+		<a class="pager-btn" href={next.href} rel="next" aria-label={`Berikutnya: ${next.label}`}>
+			{next.short} <span aria-hidden="true">→</span>
+		</a>
+	) : (
+		<span class="pager-btn is-off" aria-disabled="true"><span aria-hidden="true">→</span></span>
+	)}
+</nav>

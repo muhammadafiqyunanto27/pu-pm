@@ -1,0 +1,161 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { chapters, topics, topicsOfChapter, totalMinutes } from '../../data/materi';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+---
+
+<Layout
+	title="Rangkuman Materi — Pasar Uang & Pasar Modal"
+	description="Rangkuman 27 topik pasar uang dan pasar modal dalam lima bab, lengkap dengan tabel, poin kunci, dan kamus istilah tiap topik."
+	active="rangkuman"
+	crumb="Rangkuman · Lima bab · Enam deck sumber"
+	heading="Rangkuman Materi"
+	subheading="Dari definisi pasar keuangan sampai peran Bank Indonesia di pasar valas. Setiap topik dibuat mandiri, tetapi urutannya tetap membentuk satu alur."
+	chips={[`${chapters.length} bab`, `${topics.length} topik`, `±${totalMinutes} menit`, 'Poin kunci tiap topik']}
+>
+	<div class="wrap page-body">
+		<p class="note" style="margin:0 0 4px">
+			Gunakan filter bab atau cari kata kunci. Tekan <b>Ctrl + K</b> untuk pencarian isi penuh dari seluruh situs.
+		</p>
+
+		<div class="filter-bar" aria-label="Filter rangkuman">
+			<div class="filter-chips" role="group" aria-label="Filter berdasarkan bab">
+				<button type="button" class="chip" data-chapter-filter="all" aria-pressed="true">
+					Semua <span class="count">{topics.length}</span>
+				</button>
+				{chapters.map((chapter) => (
+					<button type="button" class="chip" data-chapter-filter={chapter.n} aria-pressed="false">
+						{chapter.roman} · {chapter.title} <span class="count">{topicsOfChapter(chapter.n).length}</span>
+					</button>
+				))}
+			</div>
+			<label class="filter-search">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+				<span class="sr-only">Cari topik</span>
+				<input type="search" id="topicSearch" placeholder="Cari judul atau isi topik…" autocomplete="off" />
+			</label>
+		</div>
+
+		<div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px">
+			<span class="result-count" id="topicCount">Menampilkan {topics.length} dari {topics.length} topik</span>
+			<span class="result-count">Urutan baca 01 → 27</span>
+		</div>
+
+		<ol class="syl" id="topicList">
+			{chapters.map((chapter) => (
+				<li class="syl-chapter" data-chapter={chapter.n} id={`bab-${chapter.n}`}>
+					<div class="syl-chead">
+						<span class="syl-roman">{chapter.roman}</span>
+						<div class="syl-ctext">
+							<h3>Bab {chapter.roman} · {chapter.title}</h3>
+							<p>{chapter.desc}</p>
+						</div>
+						<span class="syl-count">{topicsOfChapter(chapter.n).length} topik</span>
+					</div>
+					<ul class="syl-topics">
+						{topicsOfChapter(chapter.n).map((topic) => (
+							<li data-topic-item>
+								<a
+									class="syl-row"
+									href={`${base}/rangkuman/${topic.slug}`}
+									data-topic-row
+									data-search={`${topic.title} ${topic.desc} ${topic.kicker} ${chapter.title}`.toLowerCase()}
+								>
+									<span class="syl-n">{String(topic.n).padStart(2, '0')}</span>
+									<span class="syl-main">
+										<b>{topic.title}</b>
+										<small>{topic.desc}</small>
+									</span>
+									<span class="syl-arrow" aria-hidden="true">→</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</li>
+			))}
+		</ol>
+
+		<div class="filter-empty" id="topicEmpty" hidden>
+			Tidak ada topik yang cocok. Coba kata kunci lain atau pilih “Semua”.
+		</div>
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Sesudah membaca</span>
+				<h2>Kunci pembedanya</h2>
+			</div>
+			<p class="sec-hint">Kalau dua bab terasa mirip, tabel perbandingan biasanya menyelesaikan kebingungan.</p>
+		</div>
+
+		<div class="quick-grid">
+			<a class="quick-card" href={`${base}/bandingkan`}>
+				<span class="quick-num">↔</span>
+				<span class="quick-body"><b>Perbandingan PU vs PM</b><small>Enam kelompok, dari tenor sampai otoritas pengawasan.</small></span>
+			</a>
+			<a class="quick-card" href={`${base}/instrumen`}>
+				<span class="quick-num">17</span>
+				<span class="quick-body"><b>Katalog instrumen</b><small>Cari instrumen berdasarkan pasar, jenis, atau status syariah.</small></span>
+			</a>
+			<a class="quick-card" href={`${base}/glosarium`}>
+				<span class="quick-num">A–Z</span>
+				<span class="quick-body"><b>Glosarium</b><small>Definisi singkat untuk istilah yang muncul di rangkuman.</small></span>
+			</a>
+		</div>
+	</div>
+</Layout>
+
+<script is:inline>
+	(() => {
+		const list = document.getElementById('topicList');
+		const search = document.getElementById('topicSearch');
+		const count = document.getElementById('topicCount');
+		const empty = document.getElementById('topicEmpty');
+		const chips = [...document.querySelectorAll('[data-chapter-filter]')];
+		if (!list || !search || !count || !empty || !chips.length) return;
+
+		const chapters = [...list.querySelectorAll('[data-chapter]')];
+		let chapter = 'all';
+
+		const apply = () => {
+			const query = search.value.trim().toLowerCase();
+			let visible = 0;
+			let total = 0;
+
+			for (const group of chapters) {
+				const chapterMatch = chapter === 'all' || group.dataset.chapter === chapter;
+				let groupVisible = 0;
+				const rows = [...group.querySelectorAll('[data-topic-row]')];
+				for (const row of rows) {
+					total += 1;
+					const item = row.closest('[data-topic-item]');
+					const match = chapterMatch && (!query || row.dataset.search.includes(query));
+					row.hidden = !match;
+					if (item) item.hidden = !match;
+					if (match) {
+						visible += 1;
+						groupVisible += 1;
+					}
+				}
+				group.hidden = groupVisible === 0;
+			}
+
+			count.textContent = `Menampilkan ${visible} dari ${total} topik`;
+			empty.hidden = visible !== 0;
+		};
+
+		chips.forEach((chip) => {
+			chip.addEventListener('click', () => {
+				chapter = chip.dataset.chapterFilter || 'all';
+				chips.forEach((item) => item.setAttribute('aria-pressed', String(item === chip)));
+				apply();
+			});
+		});
+
+		let timer = null;
+		search.addEventListener('input', () => {
+			clearTimeout(timer);
+			timer = setTimeout(apply, 100);
+		});
+	})();
+</script>

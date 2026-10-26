@@ -1,0 +1,65 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Quiz from '../components/Quiz.tsx';
+import { chapters } from '../data/materi';
+import { soal } from '../data/quiz';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const chapterInfo = chapters.map((chapter) => ({ n: chapter.n, roman: chapter.roman, title: chapter.title }));
+const totalDasar = soal.filter((item) => item.difficulty === 'Dasar').length;
+const totalMenengah = soal.filter((item) => item.difficulty === 'Menengah').length;
+const totalTerapan = soal.filter((item) => item.difficulty === 'Terapan').length;
+---
+
+<Layout
+	title="Latihan Soal — Pasar Uang & Pasar Modal"
+	description="35 soal pilihan ganda pasar uang dan pasar modal, dengan pembahasan langsung, skor, dan tautan balik ke topik."
+	active="latihan"
+	crumb="Latihan · 35 soal · 5 bab"
+	heading="Latihan Soal"
+	subheading="Soal pilihan ganda dengan umpan balik langsung. Salah bukan masalah — yang penting tahu bagian mana yang harus dibaca ulang."
+	chips={[`${soal.length} soal`, `${totalDasar} dasar`, `${totalMenengah} menengah`, `${totalTerapan} terapan`]}
+>
+	<div class="wrap page-body">
+		<Quiz client:load soal={soal} base={base} chapters={chapterInfo} />
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Cara pakai</span>
+				<h2>Tiga aturan supaya latihan ini berguna</h2>
+			</div>
+			<p class="sec-hint">Skor tinggi bukan tujuan akhir; kemampuan menjelaskan alasannya yang lebih penting.</p>
+		</div>
+
+		<div class="block-cards">
+			<article class="block-card">
+				<p class="label">01</p>
+				<h3>Jawab sebelum membaca pilihan</h3>
+				<p>Tutup pilihan dengan mata, rumuskan jawaban sendiri, baru cari opsi yang paling dekat. Ini melatih recall, bukan sekadar pengenalan.</p>
+			</article>
+			<article class="block-card">
+				<p class="label">02</p>
+				<h3>Baca pembahasannya</h3>
+				<p>Setiap soal punya alasan jawaban. Jika kamu benar karena menebak, tetap baca pembahasannya — kebetulan tidak bisa diulang saat ujian.</p>
+			</article>
+			<article class="block-card">
+				<p class="label">03</p>
+				<h3>Kembali ke topik, bukan soal</h3>
+				<p>Kalau satu bab banyak salah, tautan pembahasan membawa ke topik sumber. Baca ulang bagian itu, lalu ulangi latihan.</p>
+			</article>
+		</div>
+
+		<div class="card" style="margin-top:24px">
+			<h3><span class="tag">Cakupan</span> Soal ini diambil dari mana?</h3>
+			<p>
+				Semua soal diturunkan dari 27 topik di situs ini — bukan dari bank soal luar.
+				Komposisinya menekankan hal yang mudah tertukar: tenor pasar uang, peran bank sentral,
+				mekanisme repo, perbedaan promes dan commercial paper, serta kurs beli dan kurs jual.
+			</p>
+			<p class="note">
+				Ingin menguji lewat tabel? Buka <a href={`${base}/bandingkan`}>perbandingan PU vs PM</a>.
+				Butuh definisi cepat? Buka <a href={`${base}/glosarium`}>glosarium</a>.
+			</p>
+		</div>
+	</div>
+</Layout>

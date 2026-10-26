@@ -1,0 +1,123 @@
+---
+import type { Topic } from '../data/types';
+import { inline, pad } from '../lib/format';
+
+interface Props {
+	topic: Topic;
+}
+
+const { topic } = Astro.props;
+---
+
+<div class="topic-main">
+	<p class="topic-intro">{topic.intro}</p>
+
+	{topic.sections.map((section, index) => (
+		<section class="topic-section" id={section.id}>
+			<h2>
+				<span class="sec-num">{pad(index + 1)}</span>
+				{section.h}
+			</h2>
+
+			{section.blocks.map((block) => (
+				<>
+					{block.t === 'p' && <p class="block-p" set:html={inline(block.text)} />}
+
+					{block.t === 'ul' && (
+						<ul class="block-list">
+							{block.items.map((item) => <li set:html={inline(item)} />)}
+						</ul>
+					)}
+
+					{block.t === 'ol' && (
+						<ol class="block-list">
+							{block.items.map((item) => <li set:html={inline(item)} />)}
+						</ol>
+					)}
+
+					{block.t === 'table' && (
+						<div class="block-table-wrap">
+							<table class="block-table">
+								{block.caption && <caption>{block.caption}</caption>}
+								<thead>
+									<tr>{block.head.map((cell) => <th scope="col">{cell}</th>)}</tr>
+								</thead>
+								<tbody>
+									{block.rows.map((row) => (
+										<tr>{row.map((cell) => <td set:html={inline(cell)} />)}</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+
+					{block.t === 'cards' && (
+						<div class="block-cards">
+							{block.items.map((item) => (
+								<article class="block-card">
+									{item.label && <p class="label">{item.label}</p>}
+									<h3>{item.title}</h3>
+									<p set:html={inline(item.text)} />
+								</article>
+							))}
+						</div>
+					)}
+
+					{block.t === 'steps' && (
+						<ol class="block-steps">
+							{block.items.map((item) => (
+								<li>
+									<div>
+										<h4>{item.title}</h4>
+										<p set:html={inline(item.text)} />
+									</div>
+								</li>
+							))}
+						</ol>
+					)}
+
+					{block.t === 'callout' && (
+						<aside class="block-callout" data-tone={block.tone ?? 'note'}>
+							<b>{block.title}</b>
+							<p set:html={inline(block.text)} />
+						</aside>
+					)}
+
+					{block.t === 'formula' && (
+						<div class="block-formula">
+							<code>{block.expr}</code>
+							{block.note && <p set:html={inline(block.note)} />}
+						</div>
+					)}
+				</>
+			))}
+		</section>
+	))}
+
+	<section class="keypoints" id="poin-kunci" aria-labelledby="poin-kunci-title">
+		<p class="eyebrow">Rangkuman topik</p>
+		<h2 id="poin-kunci-title">Empat hal yang wajib melekat</h2>
+		<ul>
+			{topic.keyPoints.map((point) => <li set:html={inline(point)} />)}
+		</ul>
+	</section>
+
+	{topic.terms && topic.terms.length > 0 && (
+		<section class="terms-box" id="istilah" aria-labelledby="istilah-title">
+			<p class="eyebrow">Kamus kecil</p>
+			<h2 id="istilah-title" class="sr-only">Istilah penting</h2>
+			<dl>
+				{topic.terms.map((term) => (
+					<div>
+						<dt>{term.term}</dt>
+						<dd set:html={inline(term.def)} />
+					</div>
+				))}
+			</dl>
+		</section>
+	)}
+
+	<p class="note">
+		Disusun dari <b>{topic.source}</b>. Istilah asing dipertahankan agar tetap sinkron dengan slide asli.
+	</p>
+</div>

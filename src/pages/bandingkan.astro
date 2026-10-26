@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { perbandingan, ringkas } from '../data/perbandingan';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const totalRows = perbandingan.reduce((total, group) => total + group.rows.length, 0);
+---
+
+<Layout
+	title="Perbandingan Pasar Uang vs Pasar Modal"
+	description="Enam kelompok perbandingan pasar uang dan pasar modal: tenor, mekanisme, risiko, likuiditas, otoritas, dan fungsi."
+	active="bandingkan"
+	crumb="Bandingkan · 6 kelompok · 22 baris"
+	heading="Pasar Uang vs Pasar Modal"
+	subheading="Bukan sekadar “pendek vs panjang”. Ada tujuh sumbu yang membedakan keduanya — dan beberapa sumbu yang justru menyambungkannya."
+	chips={[`${perbandingan.length} kelompok`, `${totalRows} baris`, 'Tabel responsif', 'Rangkuman 5 detik']}
+>
+	<div class="wrap page-body">
+		<div class="compare-summary">
+			{ringkas.map((side) => (
+				<div class="cmp-side">
+					<p class="eyebrow">{side.label}</p>
+					<h2>{side.tone === 'uang' ? 'Jangka pendek' : 'Jangka panjang'}</h2>
+					<p class="cmp-sub">
+						{side.tone === 'uang'
+							? 'Pasar untuk likuiditas. Dana yang diparkir sementara, dengan risiko yang dijaga tetap rendah.'
+							: 'Pasar untuk pertumbuhan. Dana ditanam lebih lama dan nilainya mengikuti ekspektasi pasar.'}
+					</p>
+					<ul>
+						{side.poin.map((point) => <li>{point}</li>)}
+					</ul>
+				</div>
+			))}
+		</div>
+
+		<nav class="cmp-nav" aria-label="Lompat ke kelompok perbandingan">
+			{perbandingan.map((group) => <a href={`#${group.id}`}>{group.title}</a>)}
+		</nav>
+
+		<div style="margin-top:16px">
+			{perbandingan.map((group) => (
+				<section class="cmp-group" id={group.id} aria-labelledby={`${group.id}-title`}>
+					<div class="cmp-group-head">
+						<h2 id={`${group.id}-title`}>{group.title}</h2>
+						<p>{group.desc}</p>
+					</div>
+					<div class="cmp-table-wrap">
+						<table class="cmp-table">
+							<caption class="sr-only">Perbandingan pasar uang dan pasar modal: {group.title}</caption>
+							<thead>
+								<tr>
+									<th scope="col">Aspek</th>
+									<th scope="col">Pasar uang</th>
+									<th scope="col">Pasar modal</th>
+								</tr>
+							</thead>
+							<tbody>
+								{group.rows.map((row) => (
+									<tr>
+										<th scope="row">{row.aspek}</th>
+										<td>{row.uang}</td>
+										<td>{row.modal}</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</section>
+			))}
+		</div>
+
+		<div class="card">
+			<h3><span class="tag">Jangan tertukar</span> Tiga salah paham yang sering muncul</h3>
+			<ul>
+				<li><b>“Pasar modal selalu lebih untung.”</b> Potensi imbal hasil lebih tinggi memang ada, tetapi tidak dijamin. Harga saham bisa turun dan obligasi bisa gagal bayar.</li>
+				<li><b>“Pasar uang bebas risiko.”</b> Risikonya lebih rendah, bukan nol. Risiko kredit penerbit dan likuiditas tetap ada, terutama pada instrumen korporasi.</li>
+				<li><b>“Keduanya terpisah total.”</b> Bank dan investor bergerak di keduanya. Suku bunga pasar uang memengaruhi biaya modal, dan gejolak pasar modal bisa menekan likuiditas.</li>
+			</ul>
+			<p class="note">Untuk pembeda per aspek, gunakan tabel di atas; untuk membaca alurnya, mulai dari <a href={`${base}/rangkuman/perbedaan-pasar-uang-pasar-modal`}>Tujuh Sumbu Perbedaan PU vs PM</a>.</p>
+		</div>
+
+		<div class="quick-grid" style="margin-top:24px">
+			<a class="quick-card" href={`${base}/instrumen`}>
+				<span class="quick-num">17</span>
+				<span class="quick-body"><b>Lihat instrumennya</b><small>Katalog kartu dengan tenor, risiko, dan likuiditas.</small></span>
+			</a>
+			<a class="quick-card" href={`${base}/rangkuman/produk-pasar-modal`}>
+				<span class="quick-num">PM</span>
+				<span class="quick-body"><b>Produk pasar modal</b><small>Saham, obligasi, sukuk, reksa dana, dan derivatif.</small></span>
+			</a>
+			<a class="quick-card dark" href={`${base}/latihan`}>
+				<span class="quick-num">35</span>
+				<span class="quick-body"><b>Uji pembedanya</b><small>Soal pilihan ganda dengan pembahasan tiap jawaban.</small></span>
+			</a>
+		</div>
+	</div>
+</Layout>

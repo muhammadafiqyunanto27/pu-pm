@@ -1,0 +1,42 @@
+---
+import { chapters, topicsOfChapter } from '../data/materi';
+
+interface Props {
+	base: string;
+	showDesc?: boolean;
+}
+
+const { base, showDesc = true } = Astro.props;
+---
+
+<ol class="syl">
+	{chapters.map((chapter) => {
+		const items = topicsOfChapter(chapter.n);
+		return (
+			<li class="syl-chapter" id={`bab-${chapter.n}`}>
+				<div class="syl-chead">
+					<span class="syl-roman">{chapter.roman}</span>
+					<div class="syl-ctext">
+						<h3>{chapter.title}</h3>
+						<p>{chapter.desc}</p>
+					</div>
+					<span class="syl-count">{items.length} topik</span>
+				</div>
+				<ul class="syl-topics">
+					{items.map((topic) => (
+						<li>
+							<a class="syl-row" href={`${base}/rangkuman/${topic.slug}`}>
+								<span class="syl-n">{String(topic.n).padStart(2, '0')}</span>
+								<span class="syl-main">
+									<b>{topic.title}</b>
+									{showDesc && <small>{topic.desc}</small>}
+								</span>
+								<span class="syl-arrow" aria-hidden="true">→</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			</li>
+		);
+	})}
+</ol>

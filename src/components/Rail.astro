@@ -1,0 +1,99 @@
+---
+import type { Chapter, Topic } from '../data/types';
+
+interface Props {
+	topic: Topic;
+	chapter: Chapter;
+	base: string;
+}
+
+const { topic, chapter, base } = Astro.props;
+---
+
+<aside class="topic-rail" aria-label="Navigasi topik">
+	<div class="rail-box">
+		<p class="eyebrow">Di halaman ini</p>
+		<ul class="rail-toc">
+			{topic.sections.map((section, i) => (
+				<li>
+					<a href={`#${section.id}`} data-rail-link={section.id}>
+						<span class="mono">{String(i + 1).padStart(2, '0')}</span> · {section.h}
+					</a>
+				</li>
+			))}
+			<li><a href="#poin-kunci" data-rail-link="poin-kunci"><span class="mono">✓</span> · Poin kunci</a></li>
+			{topic.terms && topic.terms.length > 0 && (
+				<li><a href="#istilah" data-rail-link="istilah"><span class="mono">A–Z</span> · Istilah</a></li>
+			)}
+		</ul>
+	</div>
+
+	<div class="rail-box">
+		<p class="eyebrow">Catatan topik</p>
+		<dl class="rail-meta">
+			<div><dt>Bab</dt><dd>{chapter.roman}</dd></div>
+			<div><dt>Topik</dt><dd>{String(topic.n).padStart(2, '0')} / 27</dd></div>
+			<div><dt>Baca</dt><dd>±{topic.minutes} mnt</dd></div>
+			<div><dt>Sumber</dt><dd>{topic.source.replace('Kelompok ', 'K').replace(' — ', ' · ')}</dd></div>
+		</dl>
+		<div class="rail-progress" role="progressbar" aria-label="Kemajuan membaca" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+			<i></i>
+		</div>
+	</div>
+
+	<div class="rail-box">
+		<p class="eyebrow">Cek pemahaman</p>
+		<p class="note" style="margin-top:0;margin-bottom:12px">Lima menit membaca, satu menit menguji diri.</p>
+		<a class="btn btn-ghost btn-sm" href={`${base}/latihan`}>Buka latihan <span aria-hidden="true">→</span></a>
+	</div>
+</aside>
+
+<script is:inline>
+	(() => {
+		const article = document.querySelector('.topic-main');
+		const progress = document.querySelector('.rail-progress');
+		const bar = progress?.querySelector('i');
+		const links = [...document.querySelectorAll('[data-rail-link]')];
+		if (!article || !progress || !bar || !links.length) return;
+
+		const sections = links
+			.map((link) => {
+				const id = link.dataset.railLink;
+				const el = id ? document.getElementById(id) : null;
+				return el ? { link, el } : null;
+			})
+			.filter(Boolean);
+
+		let ticking = false;
+
+		const update = () => {
+			ticking = false;
+			const rect = article.getBoundingClientRect();
+			const articleTop = window.scrollY + rect.top;
+			const start = articleTop - 120;
+			const end = articleTop + article.offsetHeight - window.innerHeight;
+			const ratio = end <= start ? 1 : (window.scrollY - start) / (end - start);
+			const pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+			bar.style.width = pct + '%';
+			progress.setAttribute('aria-valuenow', String(pct));
+
+			let active = sections[0];
+			for (const section of sections) {
+				if (section.el.getBoundingClientRect().top <= 140) active = section;
+			}
+			for (const section of sections) {
+				section.link.classList.toggle('active', section === active);
+			}
+		};
+
+		const onScroll = () => {
+			if (ticking) return;
+			ticking = true;
+			requestAnimationFrame(update);
+		};
+
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('resize', onScroll);
+		update();
+	})();
+</script>

@@ -1,0 +1,353 @@
+---
+import '../styles/global.css';
+import SearchOverlay from '../components/SearchOverlay.astro';
+import { chapters, topics } from '../data/materi';
+
+type PageKey = 'home' | 'rangkuman' | 'instrumen' | 'bandingkan' | 'glosarium' | 'latihan';
+
+interface Props {
+	title: string;
+	description?: string;
+	heading?: string;
+	subheading?: string;
+	crumb?: string;
+	active?: PageKey;
+	chips?: string[];
+}
+
+const {
+	title,
+	description = 'Modul belajar Pasar Uang & Pasar Modal — rangkuman enam deck materi, 27 topik, katalog instrumen, tabel perbandingan, glosarium, dan latihan soal.',
+	heading,
+	subheading,
+	crumb,
+	active,
+	chips = [],
+} = Astro.props;
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const home = base === '' ? '/' : base;
+
+const pages: { key: PageKey; href: string; label: string }[] = [
+	{ key: 'home', href: home, label: 'Beranda' },
+	{ key: 'rangkuman', href: `${base}/rangkuman`, label: 'Rangkuman' },
+	{ key: 'instrumen', href: `${base}/instrumen`, label: 'Instrumen' },
+	{ key: 'bandingkan', href: `${base}/bandingkan`, label: 'Bandingkan' },
+	{ key: 'glosarium', href: `${base}/glosarium`, label: 'Glosarium' },
+	{ key: 'latihan', href: `${base}/latihan`, label: 'Latihan' },
+];
+
+const pageIcons = [
+	'<path d="M3 10.5 12 3l9 7.5V21H3z"></path>',
+	'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>',
+	'<path d="M4 4h16v16H4z"></path><path d="M8 9h8M8 13h8M8 17h5"></path>',
+	'<path d="M4 6h7v14H4z"></path><path d="M13 6h7v14h-7z"></path><path d="M7 10h1M7 14h1M16 10h1M16 14h1"></path>',
+	'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path><path d="M8 7h8M8 11h6"></path>',
+	'<path d="M4 4h16v16H4z"></path><path d="m8 12 3 3 5-6"></path>',
+];
+---
+
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content={description} />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="theme-color" content="#f5f1e8" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#12110e" media="(prefers-color-scheme: dark)" />
+		<link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+		/>
+		<title>{title}</title>
+		<script is:inline>
+			(() => {
+				try {
+					const saved = localStorage.getItem('theme');
+					const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+					document.documentElement.setAttribute(
+						'data-theme',
+						saved === 'dark' || saved === 'light' ? saved : dark ? 'dark' : 'light'
+					);
+				} catch {}
+			})();
+		</script>
+	</head>
+	<body>
+		<a class="skip" href="#konten">Lompat ke konten</a>
+
+		<nav class="topbar" aria-label="Navigasi utama">
+			<div class="wrap topbar-inner">
+				<button
+					type="button"
+					class="burger"
+					id="burger"
+					aria-label="Buka daftar isi"
+					aria-expanded="false"
+					aria-controls="drawer"
+				>
+					<span></span><span></span><span></span>
+				</button>
+				<a href={home} class="brand" aria-label="Pasar Uang dan Pasar Modal — beranda">
+					<span class="brand-mark" aria-hidden="true">PU</span>
+					<span class="brand-text">
+						Pasar Uang &amp; Modal
+						<small>Modul belajar · 2026</small>
+					</span>
+				</a>
+				<div class="topbar-end">
+					<div class="main-links">
+						{pages.map((p) => (
+							<a href={p.href} class={active === p.key ? 'active' : ''}>{p.label}</a>
+						))}
+					</div>
+					<SearchOverlay base={base} />
+					<button
+						type="button"
+						class="theme-toggle"
+						id="themeToggle"
+						aria-label="Ganti mode terang/gelap"
+						aria-pressed="false"
+					>
+						<svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true">
+							<circle cx="12" cy="12" r="4"></circle>
+							<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+						</svg>
+						<svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+						</svg>
+					</button>
+				</div>
+			</div>
+		</nav>
+
+		<div class="scrim" id="scrim" hidden></div>
+		<aside class="drawer" id="drawer" aria-label="Daftar isi modul" aria-hidden="true" tabindex="-1" inert>
+			<div class="drawer-head">
+				<span>Daftar Isi</span>
+				<button type="button" class="drawer-close" id="drawerClose" aria-label="Tutup daftar isi">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+				</button>
+			</div>
+
+			<div class="drawer-pages">
+				{pages.map((p, i) => (
+					<a href={p.href} data-nav={p.key}>
+						<svg viewBox="0 0 24 24" aria-hidden="true" set:html={pageIcons[i]} />
+						{p.label}
+					</a>
+				))}
+			</div>
+
+			{chapters.map((c) => (
+				<div class="drawer-group">
+					<h4><span class="drawer-dot"></span>Bab {c.roman} · {c.title}</h4>
+					<ul>
+						{topics.filter((t) => t.chapter === c.n).map((t) => (
+							<li>
+								<a href={`${base}/rangkuman/${t.slug}`} class="drawer-link">
+									<span class="drawer-num">{String(t.n).padStart(2, '0')}</span>
+									{t.title}
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			))}
+
+			<div class="drawer-group">
+				<h4><span class="drawer-dot"></span>Alat belajar</h4>
+				<ul>
+					<li><a href={`${base}/bandingkan`} class="drawer-link"><span class="drawer-num">A–Z</span>Perbandingan PU vs PM</a></li>
+					<li><a href={`${base}/glosarium`} class="drawer-link"><span class="drawer-num">70</span>Glosarium istilah</a></li>
+				</ul>
+			</div>
+		</aside>
+
+		{heading && (
+			<header class="page-hero">
+				<div class="wrap">
+					{crumb && <p class="crumb">{crumb}</p>}
+					<h1>{heading}</h1>
+					{subheading && <p class="sub">{subheading}</p>}
+					{chips.length > 0 && (
+						<div class="meta-row">
+							{chips.map((chip) => <span class="meta-chip">{chip}</span>)}
+						</div>
+					)}
+				</div>
+			</header>
+		)}
+
+		<main id="konten">
+			<slot />
+		</main>
+
+		<footer>
+			<div class="wrap">
+				<div class="foot-grid">
+					<div class="foot-brand">
+						<a href={home} class="brand">
+							<span class="brand-mark" aria-hidden="true">PU</span>
+							Pasar Uang &amp; Modal
+						</a>
+						<p>
+							Modul belajar dari enam deck presentasi pasar keuangan, pasar uang, pasar modal,
+							instrumen, dan valuta asing. Dibaca berurutan atau dipakai sebagai kamus cepat.
+						</p>
+					</div>
+					<div class="foot-col">
+						<h3>Materi</h3>
+						<ul>
+							{pages.slice(1, 4).map((p) => <li><a href={p.href}>{p.label}</a></li>)}
+						</ul>
+					</div>
+					<div class="foot-col">
+						<h3>Latihan</h3>
+						<ul>
+							<li><a href={`${base}/glosarium`}>Glosarium</a></li>
+							<li><a href={`${base}/latihan`}>Latihan soal</a></li>
+							<li><a href={`${base}/bandingkan`}>Tabel perbandingan</a></li>
+						</ul>
+					</div>
+					<div class="foot-col">
+						<h3>Ringkas</h3>
+						<ul>
+							<li><a href={`${base}/rangkuman`}>27 topik · 5 bab</a></li>
+							<li><a href={`${base}/instrumen`}>17 instrumen</a></li>
+							<li><a href={`${base}/latihan`}>35 soal pilihan ganda</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="foot-bottom">
+					<span>Pasar Uang &amp; Pasar Modal · Modul belajar</span>
+					<span>Astro + React · Mode terang &amp; gelap</span>
+				</div>
+			</div>
+		</footer>
+
+		<script is:inline>
+			(() => {
+				const burger = document.getElementById('burger');
+				const drawer = document.getElementById('drawer');
+				const scrim = document.getElementById('scrim');
+				const closeBtn = document.getElementById('drawerClose');
+				if (!burger || !drawer || !scrim || !closeBtn) return;
+
+				let lastFocus = null;
+
+				const focusables = () =>
+					[...drawer.querySelectorAll('a[href], button:not([disabled])')].filter(
+						(el) => el.offsetParent !== null
+					);
+
+				const openDrawer = () => {
+					lastFocus = document.activeElement;
+					scrim.hidden = false;
+					requestAnimationFrame(() => scrim.classList.add('show'));
+					drawer.classList.add('open');
+					drawer.inert = false;
+					drawer.setAttribute('aria-hidden', 'false');
+					burger.setAttribute('aria-expanded', 'true');
+					burger.setAttribute('aria-label', 'Tutup daftar isi');
+					document.body.classList.add('nav-open');
+					closeBtn.focus();
+				};
+
+				const closeDrawer = () => {
+					scrim.classList.remove('show');
+					drawer.classList.remove('open');
+					drawer.inert = true;
+					drawer.setAttribute('aria-hidden', 'true');
+					burger.setAttribute('aria-expanded', 'false');
+					burger.setAttribute('aria-label', 'Buka daftar isi');
+					document.body.classList.remove('nav-open');
+					setTimeout(() => {
+						if (!drawer.classList.contains('open')) scrim.hidden = true;
+					}, 260);
+					if (lastFocus && lastFocus.focus) lastFocus.focus();
+				};
+
+				burger.addEventListener('click', () => {
+					drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+				});
+				closeBtn.addEventListener('click', closeDrawer);
+				scrim.addEventListener('click', closeDrawer);
+
+				document.addEventListener('keydown', (e) => {
+					if (!drawer.classList.contains('open')) return;
+					if (e.key === 'Escape') {
+						closeDrawer();
+						return;
+					}
+					if (e.key === 'Tab') {
+						const items = focusables();
+						if (!items.length) return;
+						const first = items[0];
+						const last = items[items.length - 1];
+						if (e.shiftKey && document.activeElement === first) {
+							e.preventDefault();
+							last.focus();
+						} else if (!e.shiftKey && document.activeElement === last) {
+							e.preventDefault();
+							first.focus();
+						}
+					}
+				});
+
+				drawer.addEventListener('click', (e) => {
+					if (e.target.closest('a')) closeDrawer();
+				});
+
+				const norm = (p) => (p || '/').replace(/\/+$/, '') || '/';
+				const cur = norm(location.pathname);
+				document.querySelectorAll('.drawer-pages a[data-nav]').forEach((link) => {
+					link.classList.toggle('active', norm(link.getAttribute('href')) === cur);
+				});
+				document.querySelectorAll('.drawer-link').forEach((link) => {
+					link.classList.toggle('active', norm(link.getAttribute('href')) === cur);
+				});
+
+				const toggle = document.getElementById('themeToggle');
+				const root = document.documentElement;
+				if (!toggle) return;
+				const systemDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+				const savedTheme = () => {
+					try {
+						return localStorage.getItem('theme');
+					} catch {
+						return null;
+					}
+				};
+				const currentTheme = () => root.getAttribute('data-theme') || (systemDark() ? 'dark' : 'light');
+				const syncToggle = () => {
+					toggle.setAttribute('aria-pressed', String(currentTheme() === 'dark'));
+					toggle.setAttribute('aria-label', currentTheme() === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap');
+				};
+
+				root.setAttribute('data-theme', currentTheme());
+				syncToggle();
+
+				window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+					if (savedTheme()) return;
+					root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+					syncToggle();
+				});
+
+				toggle.addEventListener('click', () => {
+					const next = currentTheme() === 'dark' ? 'light' : 'dark';
+					root.setAttribute('data-theme', next);
+					try {
+						localStorage.setItem('theme', next);
+					} catch {}
+					syncToggle();
+				});
+			})();
+		</script>
+	</body>
+</html>

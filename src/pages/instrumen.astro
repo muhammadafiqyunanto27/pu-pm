@@ -1,0 +1,210 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { instrumen, marketLabel } from '../data/instrumen';
+import { riskLevel, slugify } from '../lib/format';
+
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const categories = [...new Set(instrumen.map((item) => item.category))].sort((a, b) => a.localeCompare(b, 'id'));
+const uang = instrumen.filter((item) => item.market === 'uang').length;
+const modal = instrumen.filter((item) => item.market === 'modal').length;
+const syariah = instrumen.filter((item) => item.syariah).length;
+---
+
+<Layout
+	title="Katalog Instrumen — Pasar Uang & Pasar Modal"
+	description="17 instrumen pasar uang dan pasar modal: penerbit, tenor, imbal hasil, tingkat risiko, likuiditas, dan tautan ke materi."
+	active="instrumen"
+	crumb="Instrumen · 17 produk · 2 pasar"
+	heading="Katalog Instrumen"
+	subheading="Satu kartu untuk satu instrumen. Bandingkan penerbit, tenor, imbal hasil, risiko, dan likuiditas tanpa harus membuka slide satu per satu."
+	chips={[`${instrumen.length} instrumen`, `${uang} pasar uang`, `${modal} pasar modal`, `${syariah} syariah`]}
+>
+	<div class="wrap page-body">
+		<div class="compare-summary">
+			<div class="cmp-side">
+				<p class="eyebrow">Pasar Uang · {uang} instrumen</p>
+				<h2>Jangka pendek</h2>
+				<p class="cmp-sub">Tenor maksimal satu tahun. Nilai relatif stabil, risiko rendah, dan sebagian besar transaksinya over-the-counter.</p>
+				<ul>
+					<li>Dari call money overnight sampai SPN 12 bulan.</li>
+					<li>Banyak diterbitkan bank, BI, dan pemerintah.</li>
+					<li>Untuk menjaga likuiditas, bukan mengejar pertumbuhan agresif.</li>
+				</ul>
+			</div>
+			<div class="cmp-side">
+				<p class="eyebrow">Pasar Modal · {modal} instrumen</p>
+				<h2>Jangka panjang</h2>
+				<p class="cmp-sub">Tenor lebih dari satu tahun, bahkan tanpa jatuh tempo. Harga bergerak dan potensi imbal hasil lebih tinggi.</p>
+				<ul>
+					<li>Saham, obligasi, sukuk, reksa dana, dan derivatif.</li>
+					<li>Transaksi terorganisir di bursa atau lewat OTC.</li>
+					<li>Untuk menumbuhkan modal dengan risiko yang harus diterima.</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="filter-bar" aria-label="Filter instrumen">
+			<div class="filter-chips" role="group" aria-label="Filter pasar">
+				<button type="button" class="chip" data-market-filter="all" aria-pressed="true">
+					Semua <span class="count">{instrumen.length}</span>
+				</button>
+				<button type="button" class="chip" data-market-filter="uang" aria-pressed="false">
+					Pasar Uang <span class="count">{uang}</span>
+				</button>
+				<button type="button" class="chip" data-market-filter="modal" aria-pressed="false">
+					Pasar Modal <span class="count">{modal}</span>
+				</button>
+				<button type="button" class="chip" data-syariah-filter aria-pressed="false">
+					Syariah <span class="count">{syariah}</span>
+				</button>
+			</div>
+			<label class="filter-select">
+				<span class="sr-only">Filter kategori</span>
+				<select id="categoryFilter">
+					<option value="all">Semua kategori</option>
+					{categories.map((category) => <option value={category}>{category}</option>)}
+				</select>
+			</label>
+			<label class="filter-search">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+				<span class="sr-only">Cari instrumen</span>
+				<input type="search" id="instSearch" placeholder="Cari nama, penerbit, alias…" autocomplete="off" />
+			</label>
+		</div>
+
+		<div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:16px">
+			<span class="result-count" id="instCount">Menampilkan {instrumen.length} dari {instrumen.length} instrumen</span>
+			<span class="result-count">Risiko rendah → tinggi</span>
+		</div>
+
+		<div class="inst-grid" id="instGrid">
+			{instrumen.map((item) => (
+				<article
+					class="inst-card"
+					id={`i-${slugify(item.name)}`}
+					data-inst-card
+					data-market={item.market}
+					data-category={item.category}
+					data-syariah={item.syariah ? 'true' : 'false'}
+					data-search={`${item.name} ${item.alias ?? ''} ${item.category} ${item.issuer} ${item.tenor} ${item.result} ${item.risk} ${item.liquidity} ${item.desc}`.toLowerCase()}
+				>
+					<div class="inst-card-top">
+						<div class="inst-tags">
+							<span class="tag">{marketLabel[item.market]}</span>
+							{item.syariah && <span class="badge badge-syariah">Syariah</span>}
+							<span class="badge">{item.category}</span>
+						</div>
+						<span class="badge">{item.liquidity} likuiditas</span>
+					</div>
+					<h3>
+						{item.name}
+						{item.alias && <small>{item.alias}</small>}
+					</h3>
+					<p>{item.desc}</p>
+					<dl class="inst-facts">
+						{item.facts.slice(0, 4).map((fact) => (
+							<div>
+								<dt>{fact.label}</dt>
+								<dd>{fact.value}</dd>
+							</div>
+						))}
+					</dl>
+					<div class="inst-card-foot">
+						<span class="risk-meter">
+							Risiko {item.risk}
+							<span class="risk-bars" data-level={riskLevel(item.risk)} aria-hidden="true"><i></i><i></i><i></i></span>
+						</span>
+						{item.slug && <a href={`${base}/rangkuman/${item.slug}`}>Materi <span aria-hidden="true">↗</span></a>}
+					</div>
+				</article>
+			))}
+		</div>
+
+		<div class="filter-empty" id="instEmpty" hidden>
+			Tidak ada instrumen yang cocok. Longgarkan filter atau kosongkan kata kunci.
+		</div>
+
+		<div class="sec-title">
+			<div>
+				<span class="sec-eyebrow">Cara membaca katalog</span>
+				<h2>Tiga kolom yang paling sering tertukar</h2>
+			</div>
+			<p class="sec-hint">Jangan hafal nama saja — pahami siapa yang menerbitkan dan apa yang didapat pemegangnya.</p>
+		</div>
+
+		<div class="block-cards">
+			<article class="block-card">
+				<p class="label">Penerbit</p>
+				<h3>Bank sentral, pemerintah, bank, atau korporasi</h3>
+				<p>Penerbit menentukan sumber risiko kredit. SBI diterbitkan BI, SPN oleh pemerintah, deposito oleh bank, commercial paper oleh perusahaan.</p>
+			</article>
+			<article class="block-card">
+				<p class="label">Imbal hasil</p>
+				<h3>Diskonto, bunga, kupon, atau bagi hasil</h3>
+				<p>Diskonto dibayar di muka dengan harga di bawah nominal. Kupon dibayar berkala. Sukuk memakai akad, bukan bunga.</p>
+			</article>
+			<article class="block-card">
+				<p class="label">Likuiditas</p>
+				<h3>Mudah dijual, belum tentu bebas kerugian</h3>
+				<p>Likuiditas mengukur kecepatan menjadi uang tunai. Nilai yang diterima tetap bergantung pada harga pasar saat dijual.</p>
+			</article>
+		</div>
+	</div>
+</Layout>
+
+<script is:inline>
+	(() => {
+		const grid = document.getElementById('instGrid');
+		const search = document.getElementById('instSearch');
+		const category = document.getElementById('categoryFilter');
+		const count = document.getElementById('instCount');
+		const empty = document.getElementById('instEmpty');
+		const marketChips = [...document.querySelectorAll('[data-market-filter]')];
+		const syariahChip = document.querySelector('[data-syariah-filter]');
+		if (!grid || !search || !category || !count || !empty || !marketChips.length || !syariahChip) return;
+
+		const cards = [...grid.querySelectorAll('[data-inst-card]')];
+		let market = 'all';
+		let onlySyariah = false;
+
+		const apply = () => {
+			const query = search.value.trim().toLowerCase();
+			const wanted = category.value;
+			let visible = 0;
+
+			for (const card of cards) {
+				const matchMarket = market === 'all' || card.dataset.market === market;
+				const matchSyariah = !onlySyariah || card.dataset.syariah === 'true';
+				const matchCategory = wanted === 'all' || card.dataset.category === wanted;
+				const matchQuery = !query || card.dataset.search.includes(query);
+				const show = matchMarket && matchSyariah && matchCategory && matchQuery;
+				card.hidden = !show;
+				if (show) visible += 1;
+			}
+
+			count.textContent = `Menampilkan ${visible} dari ${cards.length} instrumen`;
+			empty.hidden = visible !== 0;
+		};
+
+		marketChips.forEach((chip) => {
+			chip.addEventListener('click', () => {
+				market = chip.dataset.marketFilter || 'all';
+				marketChips.forEach((item) => item.setAttribute('aria-pressed', String(item === chip)));
+				apply();
+			});
+		});
+
+		syariahChip.addEventListener('click', () => {
+			onlySyariah = !onlySyariah;
+			syariahChip.setAttribute('aria-pressed', String(onlySyariah));
+			apply();
+		});
+
+		category.addEventListener('change', apply);
+		let timer = null;
+		search.addEventListener('input', () => {
+			clearTimeout(timer);
+			timer = setTimeout(apply, 100);
+		});
+	})();
+</script>
